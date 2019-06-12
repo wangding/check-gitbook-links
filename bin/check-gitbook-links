@@ -1,0 +1,55 @@
+#!/usr/bin/env node
+
+const url      = require('url'),
+      http1    = require('http'),
+      http2    = require('https'),
+      getPages = require('../lib/util').getPages,
+      getLinks = require('../lib/util').getLinks;
+
+var dir        = process.argv[2] || './test/_book',
+    pages      = getPages(dir),
+    links      = getLinks(pages),
+    i          = 0,
+    n          = 0,
+    urls       = links[pages[i]];
+
+var num        = urls.length;
+
+checkPageLinks();
+
+var timer = setInterval(function() {
+  if(n > num-1) {
+    if(i < pages.length) {
+      i++;
+      n = 0;
+      urls = links[pages[i]];
+      num = urls.length;
+      checkPageLinks();
+    } else {
+      clearInterval(timer);
+    }
+  }
+}, 500);
+
+function checkPageLinks() {
+  console.log(`\nCHECK PAGE: [${pages[i]}] with ${urls.length} urls:`);
+  check(urls[n]);
+
+  function check(addr) {
+    console.log(addr);
+    if(typeof addr === 'undefined') return;
+
+    addr = url.parse(addr);
+    addr.method = 'HEAD';
+    addr.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'};
+    var http = (addr.protocol === 'http:') ? http1: http2;
+
+    var req = http.request(addr, function(res) {
+      console.log(res.statusCode);
+      if(res.statusCode === 404) process.exit(2);
+      n++;
+      if(n < num-1) check(urls[n]);
+    });
+    req.end();
+  }
+}
