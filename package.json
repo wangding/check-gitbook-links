@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "bin": {
-   "check-gitbook-links": "./bin/check-gitbook-links"
+    "check-gitbook-links": "./bin/check-gitbook-links"
   },
   "scripts": {
     "test": "eslint lib/*.js index.js bin/check-gitbook-links && mocha"
@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/wangding/check-gitbook-links#readme",
   "dependencies": {
+    "chalk": "^2.4.2",
     "cheerio": "^1.0.0-rc.3",
     "is-absolute-url": "^3.0.0",
     "node-linkchecker": "0.0.3"

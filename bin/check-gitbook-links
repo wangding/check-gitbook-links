@@ -3,14 +3,17 @@
 const url      = require('url'),
       http1    = require('http'),
       http2    = require('https'),
+      chalk    = require('chalk'),
       getPages = require('../lib/util').getPages,
       getLinks = require('../lib/util').getLinks;
 
 var dir        = process.argv[2] || './test/_book',
     pages      = getPages(dir),
     links      = getLinks(pages),
+    log        = console.log,
     i          = 0,
     n          = 0,
+    exist404   = false,
     urls       = links[pages[i]];
 
 var num        = urls.length;
@@ -27,16 +30,17 @@ var timer = setInterval(function() {
       checkPageLinks();
     } else {
       clearInterval(timer);
+      if(exist404) process.exit(2);
     }
   }
 }, 500);
 
 function checkPageLinks() {
-  console.log(`\nCHECK PAGE: [${pages[i]}] with ${urls.length} urls:`);
+  log(`\nCHECK PAGE: [${pages[i]}] with ${urls.length} urls:`);
   check(urls[n]);
 
   function check(addr) {
-    console.log(addr);
+    log(`  CHECK LINK: [${addr}]`);
     if(typeof addr === 'undefined') return;
 
     addr = url.parse(addr);
@@ -44,12 +48,16 @@ function checkPageLinks() {
     addr.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'};
     var http = (addr.protocol === 'http:') ? http1: http2;
 
-    var req = http.request(addr, function(res) {
-      console.log(res.statusCode);
-      if(res.statusCode === 404) process.exit(2);
+    var req = http.request(addr, (res) => {
+      var color = (res.statusCode === 404) ? chalk.red : chalk.green;
+      log('  ', color(res.statusCode), addr);
+      exist404 = (res.statusCode === 404) ? true: false;
       n++;
       if(n < num-1) check(urls[n]);
     });
     req.end();
+    req.on('error', (err) => {
+      log(n, num, err);
+    });
   }
 }
